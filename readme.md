@@ -28,9 +28,9 @@ This project is a personal learning exercise focused on understanding PostgreSQL
 ## Dataset Source
 
 Kaggle - Brazilian E-commerce Public Dataset  
-https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce?select=olist_products_dataset.csv
+https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce?select=products_dataset.csv
 
-Used file: `olist_products_dataset.csv`
+Used file: `products_dataset.csv`
 
 Downloaded using:
 
@@ -56,7 +56,7 @@ path := kagglehub.dataset_download("olistbr/brazilian-ecommerce")
 You can create indexes manually in your Railway DB to test performance improvements. Example:
 
 ```sql
-CREATE INDEX idx_product_weight ON olist_products(product_weight_g);
+CREATE INDEX idx_product_weight ON products(product_weight_g);
 ```
 
 This can improve query speeds when using filters like:
