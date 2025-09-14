@@ -1,7 +1,3 @@
-Sure! Here's the **copy-paste ready** `README.md` file content — no extra formatting or explanations:
-
----
-
 
 # PostgreSQL Indexing Practice 
 
