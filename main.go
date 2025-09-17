@@ -28,12 +28,14 @@ type FlexibleProductResponse map[string]interface{}
 // }
 
 func init() {
-    // Try loading .env, but don’t crash if it’s missing
     _ = godotenv.Load(".env")
 
     connStr := os.Getenv("DATABASE_URL")
     if connStr == "" {
-        log.Fatal("DATABASE_URL is not set")
+        connStr = os.Getenv("DATABASE_PUBLIC_URL")
+    }
+    if connStr == "" {
+        log.Fatal("No database connection string found")
     }
 
     var err error
@@ -46,6 +48,7 @@ func init() {
         log.Fatal("Cannot connect to database:", err)
     }
 }
+
 
 
 func getProducts(w http.ResponseWriter, r *http.Request) {
