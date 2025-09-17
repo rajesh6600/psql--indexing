@@ -28,20 +28,25 @@ type FlexibleProductResponse map[string]interface{}
 // }
 
 func init() {
-	var err error
-	err = godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	connStr := os.Getenv("DATABASE_URL")
-	db, err = sql.Open("postgres", connStr)
-	if err != nil {
-		log.Fatal("Failed to open database:", err)
-	}
-	if err = db.Ping(); err != nil {
-		log.Fatal("Cannot connect to database:", err)
-	}
+    // Try loading .env, but don’t crash if it’s missing
+    _ = godotenv.Load(".env")
+
+    connStr := os.Getenv("DATABASE_URL")
+    if connStr == "" {
+        log.Fatal("DATABASE_URL is not set")
+    }
+
+    var err error
+    db, err = sql.Open("postgres", connStr)
+    if err != nil {
+        log.Fatal("Failed to open database:", err)
+    }
+
+    if err = db.Ping(); err != nil {
+        log.Fatal("Cannot connect to database:", err)
+    }
 }
+
 
 func getProducts(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
