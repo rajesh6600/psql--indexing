@@ -20,12 +20,12 @@ var db *sql.DB
 // Flexible response struct for dynamic column selection
 type FlexibleProductResponse map[string]interface{}
 
-func nullToString(ns sql.NullString) string {
-	if ns.Valid {
-		return ns.String
-	}
-	return ""
-}
+// func nullToString(ns sql.NullString) string {
+// 	if ns.Valid {
+// 		return ns.String
+// 	}
+// 	return ""
+// }
 
 func init() {
 	var err error
