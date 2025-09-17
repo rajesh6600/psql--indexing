@@ -36,7 +36,7 @@ func init() {
     }
 
     // Fix for Go pq driver: change postgresql:// to postgres://
-    // connStr = strings.Replace(connStr, "postgresql://", "postgres://", 1)
+    connStr = strings.Replace(connStr, "postgresql://", "postgres://", 1)
 
     fmt.Println("Connecting to:", connStr)
     if connStr == "" {
