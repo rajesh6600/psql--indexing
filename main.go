@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/url"
 	"net/http"
 	"os"
 	"strconv"
@@ -32,28 +31,15 @@ func init() {
 
     rawURL := strings.TrimSpace(os.Getenv("DATABASE_URL"))
     if rawURL == "" {
-        log.Fatal("DATABASE_URL is not set")
+        log.Fatal("DATABASE_URL is not set. Make sure to set it in Railway or .env")
     }
 
-    parsed, err := url.Parse(rawURL)
-    if err != nil {
-        log.Fatal("Invalid DATABASE_URL:", err)
-    }
+    connStr := strings.Replace(rawURL, "postgresql://", "postgres://", 1)
 
-    user := parsed.User.Username()
-    pass, _ := parsed.User.Password()
-    host := parsed.Hostname()
-    port := parsed.Port()
-    dbname := parsed.Path[1:] // remove leading "/"
+    fmt.Println("Connecting to:", connStr)
 
-    dsn := fmt.Sprintf(
-        "user=%s password=%s host=%s port=%s dbname=%s sslmode=require",
-        user, pass, host, port, dbname,
-    )
-
-    fmt.Println("Connecting with DSN:", dsn)
-
-    db, err = sql.Open("postgres", dsn)
+    var err error
+    db, err = sql.Open("postgres", connStr)
     if err != nil {
         log.Fatal("Failed to open database:", err)
     }
@@ -61,8 +47,9 @@ func init() {
     if err = db.Ping(); err != nil {
         log.Fatal("Cannot connect to database:", err)
     }
-}
 
+    fmt.Println("Database connection successful!")
+}
 
 
 func getProducts(w http.ResponseWriter, r *http.Request) {
