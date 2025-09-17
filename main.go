@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/url"
 	"net/http"
 	"os"
 	"strconv"
@@ -30,21 +31,32 @@ type FlexibleProductResponse map[string]interface{}
 func init() {
     _ = godotenv.Load(".env")
 
-    connStr := os.Getenv("DATABASE_URL")
-    if connStr == "" {
-        connStr = os.Getenv("DATABASE_PUBLIC_URL")
+    rawURL := os.Getenv("DATABASE_URL")
+    if rawURL == "" {
+        log.Fatal("DATABASE_URL is not set")
     }
 
-    // Fix for Go pq driver: change postgresql:// to postgres://
-    connStr = strings.Replace(connStr, "postgresql://", "postgres://", 1)
-
-    fmt.Println("Connecting to:", connStr)
-    if connStr == "" {
-        log.Fatal("No database connection string found")
+    // Parse the URL
+    parsed, err := url.Parse(rawURL)
+    if err != nil {
+        log.Fatal("Invalid DATABASE_URL:", err)
     }
 
-    var err error
-    db, err = sql.Open("postgres", connStr)
+    user := parsed.User.Username()
+    pass, _ := parsed.User.Password()
+    host := parsed.Hostname()
+    port := parsed.Port()
+    dbname := parsed.Path[1:] // remove leading "/"
+
+    // Build DSN string
+    dsn := fmt.Sprintf(
+        "user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
+        user, pass, host, port, dbname,
+    )
+
+    fmt.Println("Connecting with DSN:", dsn)
+
+    db, err = sql.Open("postgres", dsn)
     if err != nil {
         log.Fatal("Failed to open database:", err)
     }
@@ -53,7 +65,6 @@ func init() {
         log.Fatal("Cannot connect to database:", err)
     }
 }
-
 
 
 func getProducts(w http.ResponseWriter, r *http.Request) {
