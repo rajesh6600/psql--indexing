@@ -27,16 +27,14 @@ type FlexibleProductResponse map[string]interface{}
 // 	}
 // 	return ""
 // }
-
 func init() {
     _ = godotenv.Load(".env")
 
-    rawURL := os.Getenv("DATABASE_URL")
+    rawURL := strings.TrimSpace(os.Getenv("DATABASE_URL"))
     if rawURL == "" {
         log.Fatal("DATABASE_URL is not set")
     }
 
-    // Parse the URL
     parsed, err := url.Parse(rawURL)
     if err != nil {
         log.Fatal("Invalid DATABASE_URL:", err)
@@ -48,9 +46,8 @@ func init() {
     port := parsed.Port()
     dbname := parsed.Path[1:] // remove leading "/"
 
-    // Build DSN string
     dsn := fmt.Sprintf(
-        "user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
+        "user=%s password=%s host=%s port=%s dbname=%s sslmode=require",
         user, pass, host, port, dbname,
     )
 
@@ -65,6 +62,7 @@ func init() {
         log.Fatal("Cannot connect to database:", err)
     }
 }
+
 
 
 func getProducts(w http.ResponseWriter, r *http.Request) {
