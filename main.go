@@ -3,13 +3,14 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"github.com/joho/godotenv"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/joho/godotenv"
 
 	_ "github.com/lib/pq"
 )
@@ -28,9 +29,9 @@ func nullToString(ns sql.NullString) string {
 
 func init() {
 	var err error
-	err = godotenv.Load()
+	err = godotenv.Load(".env.local")
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("Error loading .env.local file")
 	}
 	connStr := os.Getenv("DATABASE_URL")
 	db, err = sql.Open("postgres", connStr)
@@ -68,7 +69,7 @@ func getProducts(w http.ResponseWriter, r *http.Request) {
 		"product_width_cm":           true,
 	}
 
-	// --- ✅ Parse filters ---
+	// ---   Parse filters ---
 	filters := r.URL.Query()["filters"]
 	var filterConditions []string
 	var args []interface{}
@@ -96,7 +97,7 @@ func getProducts(w http.ResponseWriter, r *http.Request) {
 		argIndex += 2
 	}
 
-	// --- ✅ Parse columns ---
+	// ---   Parse columns ---
 	columnsParam := r.URL.Query().Get("columns")
 	var selectedColumns []string
 	if columnsParam != "" {
@@ -113,13 +114,13 @@ func getProducts(w http.ResponseWriter, r *http.Request) {
 	}
 	selectClause := strings.Join(selectedColumns, ", ")
 
-	// --- ✅ Build WHERE clause ---
+	// ---   Build WHERE clause ---
 	whereClause := "WHERE 1=1"
 	if len(filterConditions) > 0 {
 		whereClause += " AND " + strings.Join(filterConditions, " AND ")
 	}
 
-	// --- ✅ Parse pagination params ---
+	// ---   Parse pagination params ---
 	pageStr := r.URL.Query().Get("page")
 	limitStr := r.URL.Query().Get("limit")
 	page, err := strconv.Atoi(pageStr)
@@ -132,7 +133,7 @@ func getProducts(w http.ResponseWriter, r *http.Request) {
 	}
 	offset := (page - 1) * limit
 
-	// --- ✅ Count query for total rows ---
+	// ---   Count query for total rows ---
 	countQuery := fmt.Sprintf(`
 		SELECT COUNT(*) 
 		FROM products %s
@@ -144,7 +145,7 @@ func getProducts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// --- ✅ Final query with LIMIT/OFFSET ---
+	// ---   Final query with LIMIT/OFFSET ---
 	query := fmt.Sprintf(`
 		SELECT %s
 		FROM products
@@ -161,7 +162,7 @@ func getProducts(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	// --- ✅ Get dynamic columns ---
+	// ---   Get dynamic columns ---
 	columns, err := rows.Columns()
 	if err != nil {
 		http.Error(w, "Error getting columns: "+err.Error(), http.StatusInternalServerError)
@@ -170,7 +171,7 @@ func getProducts(w http.ResponseWriter, r *http.Request) {
 
 	var results []FlexibleProductResponse
 
-	// --- ✅ Read rows dynamically ---
+	// ---   Read rows dynamically ---
 	for rows.Next() {
 		values := make([]interface{}, len(columns))
 		valuePtrs := make([]interface{}, len(columns))
@@ -209,7 +210,7 @@ func getProducts(w http.ResponseWriter, r *http.Request) {
 		results = []FlexibleProductResponse{}
 	}
 
-	// --- ✅ Return results with pagination info ---
+	// ---   Return results with pagination info ---
 	response := map[string]interface{}{
 		"data":       results,
 		"totalCount": totalCount,

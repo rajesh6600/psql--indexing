@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Product Filter Dashboard</title>
   <style>
-    /* ✅ keep your existing styles */
+    /*   keep your existing styles */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -87,9 +87,9 @@
               <div class="filter-row" id="weight_range" style="display: none;">
                 <label>Range:</label>
                 <div class="range-inputs">
-                  <input type="number" id="weight_min" placeholder="Min" step="0.1" />
+                  <input type="number" id="weight_min" placeholder="Min" step="1" />
                   <span>to</span>
-                  <input type="number" id="weight_max" placeholder="Max" step="0.1" />
+                  <input type="number" id="weight_max" placeholder="Max" step="1" />
                 </div>
               </div>
             </div>
@@ -108,9 +108,9 @@
               <div class="filter-row" id="length_range" style="display: none;">
                 <label>Range:</label>
                 <div class="range-inputs">
-                  <input type="number" id="length_min" placeholder="Min" step="0.1" />
+                  <input type="number" id="length_min" placeholder="Min" step="1" />
                   <span>to</span>
-                  <input type="number" id="length_max" placeholder="Max" step="0.1" />
+                  <input type="number" id="length_max" placeholder="Max" step="1" />
                 </div>
               </div>
             </div>
@@ -129,9 +129,9 @@
               <div class="filter-row" id="width_range" style="display: none;">
                 <label>Range:</label>
                 <div class="range-inputs">
-                  <input type="number" id="width_min" placeholder="Min" step="0.1" />
+                  <input type="number" id="width_min" placeholder="Min" step="1" />
                   <span>to</span>
-                  <input type="number" id="width_max" placeholder="Max" step="0.1" />
+                  <input type="number" id="width_max" placeholder="Max" step="1" />
                 </div>
               </div>
             </div>
@@ -150,9 +150,9 @@
               <div class="filter-row" id="height_range" style="display: none;">
                 <label>Range:</label>
                 <div class="range-inputs">
-                  <input type="number" id="height_min" placeholder="Min" step="0.1" />
+                  <input type="number" id="height_min" placeholder="Min" step="1" />
                   <span>to</span>
-                  <input type="number" id="height_max" placeholder="Max" step="0.1" />
+                  <input type="number" id="height_max" placeholder="Max" step="1" />
                 </div>
               </div>
             </div>
@@ -181,7 +181,7 @@
 
           
         </div>
-        <!-- ✅ Columns -->
+        <!--   Columns -->
         <div class="columns-section">
           <h3>Select Columns to Display</h3>
           <div class="columns-grid">
@@ -201,7 +201,7 @@
       </form>
     </div>
 
-    <!-- ✅ Results -->
+    <!--   Results -->
     <div class="results-section">
       <div class="results-header">
         <h2>Filtered Products</h2>
@@ -209,21 +209,24 @@
       </div>
       <div id="resultsContainer"></div>
 
-      <!-- ✅ Pagination OUTSIDE resultsContainer -->
-      <div class="pagination">
+      <!--   Pagination OUTSIDE resultsContainer -->
+      <!-- <div class="pagination">
         <button id="prevPage">Prev</button>
         <span id="pageInfo"></span>
         <button id="nextPage">Next</button>
-      </div>
+      </div> -->
     </div>
   </div>
 
-  <!-- ✅ Script now outside resultsContainer -->
+  <!--   Script now outside resultsContainer -->
   <script>
     let page = 1;
-    let limit = 100;
+    let limit = 50; // load smaller chunks for smoother scrolling
     let totalPages = 1;
     let totalCount = 0;
+    let isLoading = false; // prevent duplicate fetches
+
+    
 
     const filterFields = {
       'weight': 'product_weight_g',
@@ -284,9 +287,15 @@
       return params;
     }
 
-    function displayResults(data, selectedColumns) {
+    // function displayResults(data, selectedColumns) 
+    //   Instead of replacing, append rows
+    function appendResults(data, selectedColumns, reset = false) {
       const container = document.getElementById('resultsContainer');
       const countElement = document.getElementById('resultsCount');
+
+      if (reset) {
+        container.innerHTML = '';
+      }
 
       if (data.length === 0) {
         container.innerHTML = '<p>No results found</p>';
@@ -295,29 +304,37 @@
       }
 
       countElement.textContent = `${totalCount} total results`;
+      
+  let table = container.querySelector('table');
+  if (!table) {
+    // create table once
+    let html = '<table><thead><tr>';
+    selectedColumns.forEach(col => {
+      html += `<th>${columnFields[col] || col}</th>`;
+    });
+    html += '</tr></thead><tbody></tbody></table>';
+    container.innerHTML = html;
+    table = container.querySelector('table');
+  }
 
-      let html = '<table><thead><tr>';
-      selectedColumns.forEach(col => {
-        html += `<th>${columnFields[col] || col}</th>`;
-      });
-      html += '</tr></thead><tbody>';
-      data.forEach(row => {
-        html += '<tr>';
-        selectedColumns.forEach(col => {
-          html += `<td>${row[col] ?? 'N/A'}</td>`;
-        });
-        html += '</tr>';
-      });
-      html += '</tbody></table>';
-      container.innerHTML = html;
+  const tbody = table.querySelector('tbody');
+  data.forEach(row => {
+    let tr = '<tr>';
+    selectedColumns.forEach(col => {
+      tr += `<td>${row[col] ?? 'N/A'}</td>`;
+    });
+    tr += '</tr>';
+    tbody.insertAdjacentHTML('beforeend', tr);
+  });
+}
 
-      document.getElementById('pageInfo').textContent = `Page ${page} of ${totalPages}`;
-    }
+    function fetchProducts(reset = false) {
+      if (isLoading) return;
+      isLoading = true;
 
-    function fetchProducts() {
       const params = buildQueryParams();
       const url = `/products?${params.toString()}`;
-      document.getElementById('resultsContainer').innerHTML = '<p>Loading...</p>';
+
       fetch(url)
         .then(res => res.json())
         .then(response => {
@@ -325,40 +342,104 @@
           totalCount = response.totalCount;
           totalPages = Math.ceil(totalCount / limit);
           const cols = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
-          displayResults(data, cols);
+          appendResults(data, cols, reset);
+          isLoading = false;
         })
         .catch(err => {
           console.error(err);
-          document.getElementById('resultsContainer').innerHTML = '<p>Error loading data</p>';
-          document.getElementById('resultsCount').textContent = 'Error';
+          isLoading = false;
         });
     }
 
+    //   Infinite scroll listener
+    window.addEventListener('scroll', () => {
+      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
+        if (page < totalPages && !isLoading) {
+          page++;
+          fetchProducts();
+        }
+      }
+});
+
+    //   Filter form resets and reloads from page 1
     document.getElementById('filterForm').addEventListener('submit', e => {
       e.preventDefault();
       page = 1;
-      fetchProducts();
+      fetchProducts(true); // reset = true clears old results
     });
 
-    document.getElementById('prevPage').addEventListener('click', () => {
-      if (page > 1) {
-        page--;
-        fetchProducts();
-      }
-    });
-    document.getElementById('nextPage').addEventListener('click', () => {
-      if (page < totalPages) {
-        page++;
-        fetchProducts();
-      }
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
+      document.addEventListener('DOMContentLoaded', () => {
       initializeFilterToggles();
       document.getElementById('col_category').checked = true;
       document.getElementById('col_weight').checked = true;
-      fetchProducts();
-    });
+      fetchProducts(true); // initial load
+});
+
+
+
+    //   let html = '<table><thead><tr>';
+    //   selectedColumns.forEach(col => {
+    //     html += `<th>${columnFields[col] || col}</th>`;
+    //   });
+    //   html += '</tr></thead><tbody>';
+    //   data.forEach(row => {
+    //     html += '<tr>';
+    //     selectedColumns.forEach(col => {
+    //       html += `<td>${row[col] ?? 'N/A'}</td>`;
+    //     });
+    //     html += '</tr>';
+    //   });
+    //   html += '</tbody></table>';
+    //   container.innerHTML = html;
+
+    //   document.getElementById('pageInfo').textContent = `Page ${page} of ${totalPages}`;
+    // }
+
+    // function fetchProducts() {
+    //   const params = buildQueryParams();
+    //   const url = `/products?${params.toString()}`;
+    //   document.getElementById('resultsContainer').innerHTML = '<p>Loading...</p>';
+    //   fetch(url)
+    //     .then(res => res.json())
+    //     .then(response => {
+    //       const data = response.data;
+    //       totalCount = response.totalCount;
+    //       totalPages = Math.ceil(totalCount / limit);
+    //       const cols = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+    //       displayResults(data, cols);
+    //     })
+    //     .catch(err => {
+    //       console.error(err);
+    //       document.getElementById('resultsContainer').innerHTML = '<p>Error loading data</p>';
+    //       document.getElementById('resultsCount').textContent = 'Error';
+    //     });
+    // }
+
+    // document.getElementById('filterForm').addEventListener('submit', e => {
+    //   e.preventDefault();
+    //   page = 1;
+    //   fetchProducts();
+    // });
+
+    // document.getElementById('prevPage').addEventListener('click', () => {
+    //   if (page > 1) {
+    //     page--;
+    //     fetchProducts();
+    //   }
+    // });
+    // document.getElementById('nextPage').addEventListener('click', () => {
+    //   if (page < totalPages) {
+    //     page++;
+    //     fetchProducts();
+    //   }
+    // });
+
+    // document.addEventListener('DOMContentLoaded', () => {
+    //   initializeFilterToggles();
+    //   document.getElementById('col_category').checked = true;
+    //   document.getElementById('col_weight').checked = true;
+    //   fetchProducts();
+    // });
   </script>
 </body>
 </html>
