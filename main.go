@@ -29,9 +29,9 @@ type FlexibleProductResponse map[string]interface{}
 
 func init() {
 	var err error
-	err = godotenv.Load(".env.local")
+	err = godotenv.Load(".env")
 	if err != nil {
-		log.Fatal("Error loading .env.local file")
+		log.Fatal("Error loading .env file")
 	}
 	connStr := os.Getenv("DATABASE_URL")
 	db, err = sql.Open("postgres", connStr)
