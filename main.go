@@ -34,6 +34,8 @@ func init() {
     if connStr == "" {
         connStr = os.Getenv("DATABASE_PUBLIC_URL")
     }
+
+    fmt.Println("Connecting to:", connStr)
     if connStr == "" {
         log.Fatal("No database connection string found")
     }
