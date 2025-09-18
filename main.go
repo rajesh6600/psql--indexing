@@ -36,7 +36,6 @@ func init() {
 
     connStr := strings.Replace(rawURL, "postgresql://", "postgres://", 1)
 
-    fmt.Println("Connecting to:", connStr)
 
     var err error
     db, err = sql.Open("postgres", connStr)
@@ -232,13 +231,19 @@ func getProducts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+
 func main() {
 	http.HandleFunc("/products", getProducts)
 
-	// Serve frontend (index.html etc.)
+
 	fs := http.FileServer(http.Dir("./"))
 	http.Handle("/", fs)
 
-	log.Println("Server running on :8000")
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8000" 
+	}
+
+	log.Println("Server running on :" + port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
