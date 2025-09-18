@@ -232,18 +232,18 @@ func getProducts(w http.ResponseWriter, r *http.Request) {
 }
 
 
+
 func main() {
 	http.HandleFunc("/products", getProducts)
-
 
 	fs := http.FileServer(http.Dir("./"))
 	http.Handle("/", fs)
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8000" 
+		port = "8000" // fallback for local dev
 	}
 
 	log.Println("Server running on :" + port)
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
